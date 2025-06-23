@@ -1,10 +1,11 @@
 # napari-proofread-brainbow
+https://github.com/LaboratoryOpticsBiosciences/napari-proofread-brainbow
 
-[![License MIT](https://img.shields.io/pypi/l/napari-proofread-brainbow.svg?color=green)](https://github.com/sbinnee/napari-proofread-brainbow/raw/main/LICENSE)
+[![License MIT](https://img.shields.io/pypi/l/napari-proofread-brainbow.svg?color=green)](https://github.com/LaboratoryOpticsBiosciences/napari-proofread-brainbow/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-proofread-brainbow.svg?color=green)](https://pypi.org/project/napari-proofread-brainbow)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-proofread-brainbow.svg?color=green)](https://python.org)
-[![tests](https://github.com/sbinnee/napari-proofread-brainbow/workflows/tests/badge.svg)](https://github.com/sbinnee/napari-proofread-brainbow/actions)
-[![codecov](https://codecov.io/gh/sbinnee/napari-proofread-brainbow/branch/main/graph/badge.svg)](https://codecov.io/gh/sbinnee/napari-proofread-brainbow)
+[![tests](https://github.com/LaboratoryOpticsBiosciences/napari-proofread-brainbow/workflows/tests/badge.svg)](https://github.com/LaboratoryOpticsBiosciences/napari-proofread-brainbow/actions)
+[![codecov](https://codecov.io/gh/LaboratoryOpticsBiosciences/napari-proofread-brainbow/branch/main/graph/badge.svg)](https://codecov.io/gh/LaboratoryOpticsBiosciences/napari-proofread-brainbow)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-proofread-brainbow)](https://napari-hub.org/plugins/napari-proofread-brainbow)
 [![npe2](https://img.shields.io/badge/plugin-npe2-blue?link=https://napari.org/stable/plugins/index.html)](https://napari.org/stable/plugins/index.html)
 [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)
