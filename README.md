@@ -13,6 +13,10 @@ Proofreading Brainbow images with napari
 
 ----------------------------------
 
+> [!IMPORTANT]
+> This repository has been migrated to [LaboratoryOpticsBiosciences/napari-proofread-brainbow](https://github.com/LaboratoryOpticsBiosciences/napari-proofread-brainbow) since v0.3.1.
+
+
 This [napari] plugin was generated with [copier] using the [napari-plugin-template].
 
 <!--
