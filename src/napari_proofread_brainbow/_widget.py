@@ -354,29 +354,53 @@ def widget_grid(
 
 
 class MainWidget(Container):
-    def __init__(
-        self,
-        layout='vertical',
-        widgets=[
-            widget_cvtRGB(),  # 0
-            widget_norm,      # 1
-            widget_contrast_limits_all,  # 2
-            widget_scale,     # 3
-            widget_points,    # 4
-            widget_grid(),    # 5
-        ]
-    ):
-        widgets[0].label = 'Convert to RGB'
-        widgets[1].label = 'Normalize'
-        widgets[2].label = 'Contrast max'
-        widgets[3].label = 'ZYX scale'
-        widgets[4].label = 'Points size'
-        widgets[5].label = 'Grid'
+    def __init__(self, layout='vertical'):
+        cvt_widget = widget_cvtRGB()
+        norm_widget = widget_norm
+        grid_widget = widget_grid()
+
+        cvt_widget.label = 'Convert to RGB'
+        norm_widget.label = 'Normalize'
+        widget_contrast_limits_all.label = 'Contrast max'
+        widget_scale.label = 'ZYX scale'
+        widget_points.label = 'Points size'
+        grid_widget.label = 'Grid'
+
+        # Share one layer selector across Convert/Normalize/Grid to save space.
+        cvt_widget.img_layer.label = 'Image layer'
+        norm_widget.img_layer.visible = False
+        grid_widget.img_layer.visible = False
+
+        def _sync_shared_img_layer(_event=None):
+            selected_layer = cvt_widget.img_layer.value
+            shared_choices = tuple(cvt_widget.img_layer.choices)
+
+            # Keep hidden selectors aligned with the shared selector options.
+            norm_widget.img_layer.choices = shared_choices
+            grid_widget.img_layer.choices = shared_choices
+
+            if selected_layer in shared_choices:
+                if norm_widget.img_layer.value is not selected_layer:
+                    norm_widget.img_layer.value = selected_layer
+                if grid_widget.img_layer.value is not selected_layer:
+                    grid_widget.img_layer.value = selected_layer
+
+        cvt_widget.img_layer.changed.connect(_sync_shared_img_layer)
+        _sync_shared_img_layer()
 
         help_button = PushButton(text='Show help')
         help_button.label = 'Description'
         help_button.changed.connect(lambda _: _show_help_dialog(self.native))
-        widgets.insert(0, help_button)
+
+        widgets = [
+            help_button,
+            cvt_widget,
+            norm_widget,
+            widget_contrast_limits_all,
+            widget_scale,
+            widget_points,
+            grid_widget,
+        ]
         super().__init__(layout=layout, widgets=widgets)
 
 
