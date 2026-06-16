@@ -18,9 +18,33 @@ from itertools import tee
 import numpy as np
 
 from magicgui import magic_factory, magicgui
-from magicgui.widgets import Container, Label
+from magicgui.widgets import Container, PushButton
 from napari import layers as L
 from napari import types
+from qtpy.QtWidgets import QMessageBox
+
+
+_HELP_TEXT = (
+    "1. Open an image (or drag-and-drop)                         \n"
+    "2. Convert it to RGB                                        \n"
+    "3. In 'layer list' on the left, right-click the image layer \n"
+    "  and 'Split RGB'. This will split channels into layers.    \n"
+    "  This is useful when you go 3D (Ctrl+Y).                   \n"
+    "4. You can adjust 'contrast limits' either using 'Normalize'\n"
+    "module or 'Contrast max'                                    \n"
+    "5. When you are on 3D view mode (Ctrl+Y), z-scale is too    \n"
+    "  short. Increasing it may help by 'ZYX scale' slider.      \n"
+    "6. When you load a .csv file, it becomes a Points layer in  \n"
+    "  napari. You can resize points using 'Points size' module. \n"
+    "IMPORTANT. The order of layers matters. Make sure that      \n"
+    "Points layers are placed above Image layers so that points  \n"
+    "can appear properly."
+)
+
+
+def _show_help_dialog(parent=None):
+    """Show plugin usage help in a compact popup dialog."""
+    QMessageBox.information(parent, 'Proofread Brainbow Help', _HELP_TEXT)
 
 
 @magic_factory(
@@ -338,27 +362,10 @@ class MainWidget(Container):
         widgets[4].label = 'Points size'
         widgets[5].label = 'Grid'
 
-        widget_desc = Label(
-            name='Description',
-            label="Description",
-            value=(
-                "1. Open an image (or drag-and-drop)                         \n"
-                "2. Convert it to RGB                                        \n"
-                "3. In 'layer list' on the left, right-click the image layer \n"
-                "  and 'Split RGB'. This will split channels into layers.    \n"
-                "  This is useful when you go 3D (Ctrl+Y).                   \n"
-                "4. You can adjust 'contrast limits' either using 'Normalize'\n"
-                "module or 'Contrast max'                                    \n"
-                "5. When you are on 3D view mode (Ctrl+Y), z-scale is too    \n"
-                "  short. Increasing it may help by 'ZYX scale' slider.      \n"
-                "6. When you load a .csv file, it becomes a Points layer in  \n"
-                "  napari. You can resize points using 'Points size' module. \n"
-                "IMPORTANT. The order of layers matters. Make sure that      \n"
-                "Points layers are placed above Image layers so that points  \n"
-                "can appear properly."
-            ),
-        )
-        widgets.insert(0, widget_desc)
+        help_button = PushButton(text='Show help')
+        help_button.label = 'Description'
+        help_button.changed.connect(lambda _: _show_help_dialog(self.native))
+        widgets.insert(0, help_button)
         super().__init__(layout=layout, widgets=widgets)
 
 
