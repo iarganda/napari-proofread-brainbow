@@ -18,7 +18,7 @@ from itertools import tee
 import numpy as np
 
 from magicgui import magic_factory, magicgui
-from magicgui.widgets import Container, PushButton
+from magicgui.widgets import Container, Label, PushButton
 from napari import layers as L
 from napari import types
 from qtpy.QtWidgets import QMessageBox
@@ -56,6 +56,32 @@ def _show_help_dialog(parent=None):
     # Ensure full lines are visible without aggressive wrapping.
     msg_box.setStyleSheet('QLabel{min-width: 400px;}')
     msg_box.exec_()
+
+
+def _make_titled_panel(title: str, widgets):
+    """Create a compact bordered panel with a title row."""
+    title_label = Label(value=title)
+    title_label.label = ''
+    title_label.native.setObjectName('panelTitle')
+
+    panel = Container(
+        layout='vertical',
+        widgets=[title_label, *widgets],
+        labels=False,
+    )
+    panel.native.setObjectName('panelContainer')
+    panel.native.setStyleSheet(
+        '#panelContainer {'
+        ' border: 1px solid palette(mid);'
+        ' border-radius: 6px;'
+        ' padding: 6px;'
+        '}'
+        '#panelTitle {'
+        ' font-weight: 600;'
+        ' padding-bottom: 4px;'
+        '}'
+    )
+    return panel
 
 
 @magic_factory(
@@ -356,15 +382,20 @@ def widget_grid(
 class MainWidget(Container):
     def __init__(self, layout='vertical'):
         cvt_widget = widget_cvtRGB()
+        cvt_widget.call_button.text = 'convertRGB'
+        cvt_widget.call_button.tooltip = (
+            'Convert the selected image to RGB by moving the channel axis to the end'
+)
         norm_widget = widget_norm
         grid_widget = widget_grid()
 
-        cvt_widget.label = 'Convert to RGB'
-        norm_widget.label = 'Normalize'
-        widget_contrast_limits_all.label = 'Contrast max'
-        widget_scale.label = 'ZYX scale'
-        widget_points.label = 'Points size'
-        grid_widget.label = 'Grid'
+        # Hide left labels to keep the UI compact in a single column.
+        cvt_widget.label = ''
+        norm_widget.label = ''
+        widget_contrast_limits_all.label = ''
+        widget_scale.label = ''
+        widget_points.label = ''
+        grid_widget.label = ''
 
         # Share one layer selector across Convert/Normalize/Grid to save space.
         cvt_widget.img_layer.label = 'Image layer'
@@ -389,19 +420,35 @@ class MainWidget(Container):
         _sync_shared_img_layer()
 
         help_button = PushButton(text='Show help')
-        help_button.label = 'Description'
+        help_button.label = ''
         help_button.changed.connect(lambda _: _show_help_dialog(self.native))
+
+        image_tools = _make_titled_panel(
+            'Image Layer Tools',
+            [
+                cvt_widget,
+                Label(value='Normalize'),
+                norm_widget,
+                Label(value='Contrast max'),
+                widget_contrast_limits_all,
+                Label(value='ZYX scale'),
+                widget_scale,
+                Label(value='Grid'),
+                grid_widget,
+            ],
+        )
+
+        point_tools = _make_titled_panel(
+            'Point Layer Tools',
+            [widget_points],
+        )
 
         widgets = [
             help_button,
-            cvt_widget,
-            norm_widget,
-            widget_contrast_limits_all,
-            widget_scale,
-            widget_points,
-            grid_widget,
+            image_tools,
+            point_tools,
         ]
-        super().__init__(layout=layout, widgets=widgets)
+        super().__init__(layout=layout, widgets=widgets, labels=False)
 
 
 # @magic_factory(
