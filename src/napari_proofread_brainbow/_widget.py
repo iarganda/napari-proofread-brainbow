@@ -25,26 +25,37 @@ from qtpy.QtWidgets import QMessageBox
 
 
 _HELP_TEXT = (
-    "1. Open an image (or drag-and-drop)                         \n"
-    "2. Convert it to RGB                                        \n"
-    "3. In 'layer list' on the left, right-click the image layer \n"
-    "  and 'Split RGB'. This will split channels into layers.    \n"
-    "  This is useful when you go 3D (Ctrl+Y).                   \n"
-    "4. You can adjust 'contrast limits' either using 'Normalize'\n"
-    "module or 'Contrast max'                                    \n"
-    "5. When you are on 3D view mode (Ctrl+Y), z-scale is too    \n"
-    "  short. Increasing it may help by 'ZYX scale' slider.      \n"
-    "6. When you load a .csv file, it becomes a Points layer in  \n"
-    "  napari. You can resize points using 'Points size' module. \n"
-    "IMPORTANT. The order of layers matters. Make sure that      \n"
-    "Points layers are placed above Image layers so that points  \n"
-    "can appear properly."
+    "Proofread Brainbow - Quick Guide\n"
+    "================================\n\n"
+    "Image workflow\n"
+    "- Open an image (or drag and drop).\n"
+    "- Click 'Convert to RGB'.\n"
+    "- In the layer list, right-click the RGB image and select\n"
+    "  'Split RGB' to separate channels (recommended for 3D).\n\n"
+    "Display tuning\n"
+    "- Use 'Normalize' or 'Contrast max' to adjust visibility.\n"
+    "- In 3D mode (Ctrl+Y), increase z scale with 'ZYX scale'\n"
+    "  if structures look flattened.\n\n"
+    "Points and CSV\n"
+    "- CSV files are loaded as a Points layer.\n"
+    "- Use 'Points size' to improve point visibility.\n"
+    "- Use 'Threshold probability (csv)' to filter predictions\n"
+    "  by confidence.\n\n"
+    "Tip\n"
+    "- Keep Points layers above Image layers so points remain\n"
+    "  clearly visible."
 )
 
 
 def _show_help_dialog(parent=None):
     """Show plugin usage help in a compact popup dialog."""
-    QMessageBox.information(parent, 'Proofread Brainbow Help', _HELP_TEXT)
+    msg_box = QMessageBox(parent)
+    msg_box.setWindowTitle('Proofread Brainbow Help')
+    msg_box.setIcon(QMessageBox.Information)
+    msg_box.setText(_HELP_TEXT)
+    # Ensure full lines are visible without aggressive wrapping.
+    msg_box.setStyleSheet('QLabel{min-width: 400px;}')
+    msg_box.exec_()
 
 
 @magic_factory(
