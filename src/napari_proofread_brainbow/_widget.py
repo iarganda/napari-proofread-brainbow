@@ -148,7 +148,7 @@ def widget_norm(
 @magicgui(
     contrast_limits_vmax=dict(
         label='vmax',
-        widget_type='Slider',
+        widget_type='FloatSlider',
         value=255,
         step=1,
         min=1,
@@ -398,7 +398,7 @@ class MainWidget(Container):
         grid_widget.call_button.tooltip = (
             'Make a grid on the selected image by drawing lines and labels'
         )
-        
+
         # Hide left labels to keep the UI compact in a single column.
         cvt_widget.label = ''
         norm_widget.label = ''
@@ -425,6 +425,14 @@ class MainWidget(Container):
                     norm_widget.img_layer.value = selected_layer
                 if grid_widget.img_layer.value is not selected_layer:
                     grid_widget.img_layer.value = selected_layer
+
+            # Update vmax slider to match the selected image's contrast limit.
+            if selected_layer is not None:
+                vmax = selected_layer.contrast_limits[1]
+                # print(f"selected_layer: {selected_layer.name}, vmax: {vmax}")
+                if widget_contrast_limits_all.contrast_limits_vmax.value != vmax:
+                    widget_contrast_limits_all.contrast_limits_vmax.max = vmax
+                    widget_contrast_limits_all.contrast_limits_vmax.value = vmax
 
         cvt_widget.img_layer.changed.connect(_sync_shared_img_layer)
         _sync_shared_img_layer()
