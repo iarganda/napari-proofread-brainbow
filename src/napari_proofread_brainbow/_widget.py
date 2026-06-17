@@ -387,8 +387,18 @@ class MainWidget(Container):
             'Convert the selected image to RGB by moving the channel axis to the end'
 )
         norm_widget = widget_norm
+        norm_widget.call_button.text = 'normalize(img layer)(perc=99)'
+        norm_widget.call_button.tooltip = (
+            'Normalize the selected image by setting the maximum contrast limit to '
+            'the 99 percentile of the image'
+        )
+        
         grid_widget = widget_grid()
-
+        grid_widget.call_button.text = 'make grid'
+        grid_widget.call_button.tooltip = (
+            'Make a grid on the selected image by drawing lines and labels'
+        )
+        
         # Hide left labels to keep the UI compact in a single column.
         cvt_widget.label = ''
         norm_widget.label = ''
