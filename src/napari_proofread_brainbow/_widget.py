@@ -307,6 +307,7 @@ def widget_points(
         step=1,
         min=2,
         max=10,
+        tooltip="Number of bins in x direction for grid"
     ),
     ybins=dict(
         widget_type='Slider',
@@ -314,6 +315,7 @@ def widget_points(
         step=1,
         min=2,
         max=10,
+        tooltip="Number of bins in y direction for grid"
     ),
     # thickness = dict(
     #     widget_type='FloatSlider',
