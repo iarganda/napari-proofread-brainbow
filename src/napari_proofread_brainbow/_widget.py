@@ -175,6 +175,7 @@ def widget_contrast_limits_all(
         step=0.1,
         min=0.5,
         max=5.0,
+        tooltip="Adjust z scale for all image layers"
     ),
     scale_y=dict(
         widget_type='FloatSlider',
@@ -182,6 +183,7 @@ def widget_contrast_limits_all(
         step=0.1,
         min=0.5,
         max=5.0,
+        tooltip="Adjust y scale for all image layers"
     ),
     scale_x=dict(
         widget_type='FloatSlider',
@@ -189,21 +191,25 @@ def widget_contrast_limits_all(
         step=0.1,
         min=0.5,
         max=5.0,
+        tooltip="Adjust x scale for all image layers"
     ),
     scale_z_default=dict(
         widget_type='PushButton',
         value=True,
-        text='default_z'
+        text='default_z',
+        tooltip="Reset z scale to 1.0 for all image layers"
     ),
     scale_y_default=dict(
         widget_type='PushButton',
         value=True,
-        text='default_y'
+        text='default_y',
+        tooltip="Reset y scale to 1.0 for all image layers"
     ),
     scale_x_default=dict(
         widget_type='PushButton',
         value=True,
-        text='default_x'
+        text='default_x',
+        tooltip="Reset x scale to 1.0 for all image layers"
     ),
     auto_call=True,
     call_button=False,
