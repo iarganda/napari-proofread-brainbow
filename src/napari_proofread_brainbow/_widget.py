@@ -73,14 +73,18 @@ def _make_titled_panel(title: str, widgets):
     panel.native.setStyleSheet(
         '#panelContainer {'
         ' border: 1px solid palette(mid);'
-        ' border-radius: 6px;'
-        ' padding: 6px;'
+        ' border-radius: 0px;'
+        ' padding: 0px;'
+        ' margin: 0px;'
         '}'
         '#panelTitle {'
         ' font-weight: 600;'
-        ' padding-bottom: 4px;'
+        ' padding: 0px;'
+        ' margin: 1px;'
         '}'
     )
+    panel.native.layout().setSpacing(0)  # Distance between adjacent widgets (in pixels)
+    panel.native.layout().setContentsMargins(2, 0, 2, 1)  # Left, top, right, bottom margins (in pixels)
     return panel
 
 
