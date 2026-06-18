@@ -94,6 +94,12 @@ def widget_cvtRGB(
 ) -> types.LayerDataTuple:
     # print(len(viewer.layers))
     # print(f"you have selected {img_layer}")
+    
+    # Do nothing if no image layers are present.
+    # This prevents errors when the widget is initialized.
+    if len(viewer.layers) < 1:
+        return None
+    
     data = img_layer.data
     # print(data.shape, data.ndim, data.dtype)
     if data.ndim == 4:
@@ -129,6 +135,8 @@ def widget_norm(
     viewer: 'napari.Viewer',
     img_layer: L.Image,
 ):
+    if img_layer is None:
+        return
     data = img_layer.data
     # print(data.shape)
     if data.shape[-1] == 3:
@@ -295,6 +303,8 @@ def widget_points(
     point_layer: L.Points,
     point_size,
 ):
+    if point_layer is None:
+        return
     # print(f"you have selected {point_layer}")
     # Seems to interact with scales and distance from camera
     point_layer.size = point_size
@@ -337,6 +347,9 @@ def widget_grid(
         next(b, None)
         return zip(a, b)
 
+    if img_layer is None:
+        return
+    
     shape = img_layer.data.shape
     width = shape[-2] if shape[-1] == 3 else shape[-1]
     height = shape[-3] if shape[-1] == 3 else shape[-2]
