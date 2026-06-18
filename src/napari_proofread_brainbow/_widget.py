@@ -80,12 +80,19 @@ def _make_titled_panel(title: str, widgets):
         '#panelTitle {'
         ' font-weight: 600;'
         ' padding: 0px;'
-        ' margin: 1px;'
+        ' margin-bottom: 4px;'
         '}'
     )
     panel.native.layout().setSpacing(0)  # Distance between adjacent widgets (in pixels)
     panel.native.layout().setContentsMargins(2, 0, 2, 1)  # Left, top, right, bottom margins (in pixels)
     return panel
+
+def setup_layout(gui_container):
+    """Adjust layout spacing and margins for a magicgui container."""
+    # Adjust structural layout padding and inner widget spacing
+    qt_layout = gui_container.native.layout()
+    qt_layout.setSpacing(4)
+    qt_layout.setContentsMargins(10, 0, 10, 4)  # left, top, right, bottom
 
 
 @magic_factory(
@@ -128,7 +135,6 @@ def widget_cvtRGB(
             return (data.transpose(1, 2, 3, 0), kwargs, 'image')
     else:
         return None
-
 
 @magicgui(
     img_layer=dict(tooltip="Set maximum contrast limit to 99 percentile of the "
@@ -410,20 +416,21 @@ class MainWidget(Container):
         cvt_widget.call_button.text = 'Convert to RGB'
         cvt_widget.call_button.tooltip = (
             'Convert the selected image to RGB by moving the channel axis to the end'
-)
+        )
+
         norm_widget = widget_norm
         norm_widget.call_button.text = 'Normalize (perc=99)'
         norm_widget.call_button.tooltip = (
             'Normalize the selected image by setting the maximum contrast limit to '
             'the 99 percentile of the image'
         )
-        
+
         grid_widget = widget_grid()
         grid_widget.call_button.text = 'Make grid'
         grid_widget.call_button.tooltip = (
             'Make a grid on the selected image by drawing lines and labels'
         )
-
+        
         # Hide left labels to keep the UI compact in a single column.
         cvt_widget.label = ''
         norm_widget.label = ''
@@ -459,6 +466,15 @@ class MainWidget(Container):
             labels=False,
         )
 
+        # Adjust layout spacing and margins for each widget to make the UI compact.
+        setup_layout(cvt_widget)
+        setup_layout(norm_widget)
+        setup_layout(grid_widget)
+        setup_layout(scale_reset_buttons)
+        setup_layout(widget_scale)
+        setup_layout(widget_contrast_limits_all)
+        setup_layout(widget_points)
+        
         # Share one layer selector across Convert/Normalize/Grid to save space.
         cvt_widget.img_layer.label = 'Image layer'
         norm_widget.img_layer.visible = False
@@ -497,7 +513,7 @@ class MainWidget(Container):
             'Image Layer Tools',
             [
                 cvt_widget,
-                Label(value='Normalize'),
+                #Label(value='Normalize'),
                 norm_widget,
                 Label(value='Contrast max'),
                 widget_contrast_limits_all,
