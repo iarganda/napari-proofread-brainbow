@@ -428,6 +428,33 @@ class MainWidget(Container):
         widget_points.label = ''
         grid_widget.label = ''
 
+        # Replace stacked reset buttons with one horizontal button row.
+        widget_scale.scale_z_default.visible = False
+        widget_scale.scale_y_default.visible = False
+        widget_scale.scale_x_default.visible = False
+
+        scale_reset_z_button = PushButton(text='Reset z')
+        scale_reset_z_button.label = ''
+        scale_reset_z_button.changed.connect(_scale_z_default)
+
+        scale_reset_y_button = PushButton(text='Reset y')
+        scale_reset_y_button.label = ''
+        scale_reset_y_button.changed.connect(_scale_y_default)
+
+        scale_reset_x_button = PushButton(text='Reset x')
+        scale_reset_x_button.label = ''
+        scale_reset_x_button.changed.connect(_scale_x_default)
+
+        scale_reset_buttons = Container(
+            layout='horizontal',
+            widgets=[
+                scale_reset_z_button,
+                scale_reset_y_button,
+                scale_reset_x_button,
+            ],
+            labels=False,
+        )
+
         # Share one layer selector across Convert/Normalize/Grid to save space.
         cvt_widget.img_layer.label = 'Image layer'
         norm_widget.img_layer.visible = False
@@ -472,6 +499,7 @@ class MainWidget(Container):
                 widget_contrast_limits_all,
                 Label(value='ZYX scale'),
                 widget_scale,
+                scale_reset_buttons,
                 Label(value='Grid'),
                 grid_widget,
             ],
