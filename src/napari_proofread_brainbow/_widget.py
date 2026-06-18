@@ -86,7 +86,7 @@ def _make_titled_panel(title: str, widgets):
 
 @magic_factory(
     img_layer=dict(tooltip="Select raw Brainbow image"),
-    call_button='convertRGB',
+    call_button='Convert to RGB',
 )
 def widget_cvtRGB(
     viewer: 'napari.Viewer',
@@ -129,7 +129,7 @@ def widget_cvtRGB(
 @magicgui(
     img_layer=dict(tooltip="Set maximum contrast limit to 99 percentile of the "
                    "given image"),
-    call_button='normalize(img layer)(perc=99)',
+    call_button='Normalize (perc=99)',
 )
 def widget_norm(
     viewer: 'napari.Viewer',
@@ -204,19 +204,19 @@ def widget_contrast_limits_all(
     scale_z_default=dict(
         widget_type='PushButton',
         value=True,
-        text='default_z',
+        text='Reset z',
         tooltip="Reset z scale to 1.0 for all image layers"
     ),
     scale_y_default=dict(
         widget_type='PushButton',
         value=True,
-        text='default_y',
+        text='Reset y',
         tooltip="Reset y scale to 1.0 for all image layers"
     ),
     scale_x_default=dict(
         widget_type='PushButton',
         value=True,
-        text='default_x',
+        text='Reset x',
         tooltip="Reset x scale to 1.0 for all image layers"
     ),
     auto_call=True,
@@ -403,19 +403,19 @@ def widget_grid(
 class MainWidget(Container):
     def __init__(self, layout='vertical'):
         cvt_widget = widget_cvtRGB()
-        cvt_widget.call_button.text = 'convertRGB'
+        cvt_widget.call_button.text = 'Convert to RGB'
         cvt_widget.call_button.tooltip = (
             'Convert the selected image to RGB by moving the channel axis to the end'
 )
         norm_widget = widget_norm
-        norm_widget.call_button.text = 'normalize(img layer)(perc=99)'
+        norm_widget.call_button.text = 'Normalize (perc=99)'
         norm_widget.call_button.tooltip = (
             'Normalize the selected image by setting the maximum contrast limit to '
             'the 99 percentile of the image'
         )
         
         grid_widget = widget_grid()
-        grid_widget.call_button.text = 'make grid'
+        grid_widget.call_button.text = 'Make grid'
         grid_widget.call_button.tooltip = (
             'Make a grid on the selected image by drawing lines and labels'
         )
