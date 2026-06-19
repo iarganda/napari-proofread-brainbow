@@ -18,7 +18,7 @@ from itertools import tee
 import numpy as np
 
 from magicgui import magic_factory, magicgui
-from magicgui.widgets import Container, Label, PushButton
+from magicgui.widgets import CheckBox, Container, Label, PushButton, SpinBox
 from napari import layers as L
 from napari import types
 from qtpy.QtWidgets import QMessageBox
@@ -410,6 +410,216 @@ def widget_grid(
     return (data, kwargs, 'shapes')
 
 
+# ---------------------------------------------------------------------------
+# Class annotation: constants
+# ---------------------------------------------------------------------------
+
+_N_CLASSES = 10
+_CLASS_COLORS_HEX = [
+    '#E6194B',  # 0 – red
+    '#3CB44B',  # 1 – green
+    '#4363D8',  # 2 – blue
+    '#F58231',  # 3 – orange
+    '#911EB4',  # 4 – purple
+    '#42D4F4',  # 5 – cyan
+    '#F032E6',  # 6 – magenta
+    '#BFEF45',  # 7 – lime
+    '#FABED4',  # 8 – pink
+    '#469990',  # 9 – teal
+]
+
+
+def _hex_to_rgba(hex_color: str):
+    h = hex_color.lstrip('#')
+    return [int(h[i: i + 2], 16) / 255.0 for i in (0, 2, 4)] + [1.0]
+
+
+_CLASS_COLORS_RGBA = [_hex_to_rgba(c) for c in _CLASS_COLORS_HEX]
+_UNASSIGNED_RGBA = [0.7, 0.7, 0.7, 0.7]  # grey for points without a class
+
+
+# ---------------------------------------------------------------------------
+# PointClassWidget
+# ---------------------------------------------------------------------------
+
+class PointClassWidget(Container):
+    """Optional widget for per-point numerical class annotation.
+
+    When enabled:
+      * Every point added to the active layer is automatically tagged with
+        the currently selected class.
+      * Selected points can be re-tagged via 'Assign class to selected'.
+      * Points are colored per-class and display their class number.
+      * The 'class' column is included when the layer is saved as CSV.
+    """
+
+    def __init__(self, point_layer_widget):
+        self._point_layer_widget = point_layer_widget
+        self._layer = None
+        self._event_conn = None
+        self._refreshing = False
+
+        self._enable_cb = CheckBox(value=False, text='Enable class annotation')
+        self._enable_cb.label = ''
+
+        self._class_spin = SpinBox(value=0, min=0, max=_N_CLASSES - 1)
+        self._class_spin.label = 'Current class'
+        self._class_spin.enabled = False
+
+        self._color_label = Label(value=f'Class 0 color: {_CLASS_COLORS_HEX[0]}')
+        self._color_label.label = ''
+
+        self._assign_btn = PushButton(text='Assign class to selected')
+        self._assign_btn.label = ''
+        self._assign_btn.enabled = False
+
+        self._enable_cb.changed.connect(self._on_toggle)
+        self._class_spin.changed.connect(self._on_class_changed)
+        self._assign_btn.changed.connect(self._on_assign)
+        point_layer_widget.changed.connect(self._on_layer_changed)
+
+        super().__init__(
+            layout='vertical',
+            widgets=[
+                self._enable_cb,
+                self._class_spin,
+                self._color_label,
+                self._assign_btn,
+            ],
+            labels=True,
+        )
+
+    # ---- slots -----------------------------------------------------------
+
+    def _on_toggle(self, enabled):
+        self._class_spin.enabled = enabled
+        self._assign_btn.enabled = enabled
+        layer = self._current_layer()
+        if enabled:
+            self._activate(layer)
+        else:
+            self._deactivate(layer)
+
+    def _on_layer_changed(self, layer):
+        if self._enable_cb.value:
+            self._deactivate(self._layer)
+            self._activate(layer)
+        self._layer = layer
+
+    def _on_class_changed(self, cls):
+        self._color_label.value = f'Class {cls} color: {_CLASS_COLORS_HEX[cls]}'
+        layer = self._current_layer()
+        if layer is not None and self._enable_cb.value:
+            layer.current_properties = {'class': [cls]}
+
+    def _on_data_changed(self, event):
+        """Called when points are added to or removed from the layer."""
+        layer = self._current_layer()
+        if layer is None or self._refreshing:
+            return
+        self._sync_class_column(layer)
+        self._refresh_display(layer)
+
+    def _on_assign(self, _):
+        layer = self._current_layer()
+        if layer is None:
+            return
+        selected = list(layer.selected_data)
+        if not selected:
+            return
+        cls = self._class_spin.value
+        self._ensure_class_column(layer)
+        for i in selected:
+            layer.features['class'].iat[i] = cls
+        self._refresh_display(layer)
+
+    # ---- helpers ---------------------------------------------------------
+
+    def _current_layer(self):
+        return self._point_layer_widget.value
+
+    def _activate(self, layer):
+        if layer is None:
+            return
+        self._layer = layer
+        self._ensure_class_column(layer)
+        # New points will inherit the currently selected class.
+        layer.current_properties = {'class': [self._class_spin.value]}
+        self._disconnect_events()
+        self._event_conn = layer.events.data.connect(self._on_data_changed)
+        self._refresh_display(layer)
+
+    def _deactivate(self, layer):
+        self._disconnect_events()
+        if layer is None:
+            return
+        try:
+            layer.text.visible = False
+            if len(layer.data) > 0:
+                layer.face_color = 'white'
+        except Exception:
+            pass
+
+    def _disconnect_events(self):
+        if self._event_conn is not None:
+            try:
+                self._event_conn.disconnect()
+            except Exception:
+                pass
+            self._event_conn = None
+
+    def _ensure_class_column(self, layer):
+        """Add 'class' column (int64, default 0) to layer.features if absent."""
+        n = len(layer.data)
+        if 'class' not in layer.features.columns:
+            layer.features['class'] = np.zeros(n, dtype=np.int64)
+
+    def _sync_class_column(self, layer):
+        """Keep 'class' column length in sync with layer.data after add/remove."""
+        n = len(layer.data)
+        if 'class' not in layer.features.columns:
+            layer.features['class'] = np.zeros(n, dtype=np.int64)
+            return
+        old_n = len(layer.features['class'])
+        if old_n == n:
+            return
+        if n > old_n:
+            cls = self._class_spin.value
+            layer.features['class'] = np.concatenate([
+                layer.features['class'].to_numpy(),
+                np.full(n - old_n, cls, dtype=np.int64),
+            ])
+        else:
+            layer.features['class'] = layer.features['class'].to_numpy()[:n]
+
+    def _refresh_display(self, layer):
+        """Recompute per-point face colors and class-number text labels."""
+        if self._refreshing:
+            return
+        n = len(layer.data)
+        if n == 0:
+            return
+        self._ensure_class_column(layer)
+        classes = layer.features['class'].to_numpy().astype(int)
+        colors = np.array(
+            [_CLASS_COLORS_RGBA[c] if 0 <= c < _N_CLASSES else _UNASSIGNED_RGBA
+             for c in classes],
+            dtype=float,
+        )
+        self._refreshing = True
+        try:
+            layer.face_color = colors
+            layer.text = {
+                'string': '{class}',
+                'size': 10,
+                'color': 'white',
+                'anchor': 'center',
+                'visible': True,
+            }
+        finally:
+            self._refreshing = False
+
+
 class MainWidget(Container):
     def __init__(self, layout='vertical'):
         cvt_widget = widget_cvtRGB()
@@ -525,9 +735,12 @@ class MainWidget(Container):
             ],
         )
 
+        point_class_widget = PointClassWidget(widget_points.point_layer)
+        setup_layout(point_class_widget)
+
         point_tools = _make_titled_panel(
             'Point Layer Tools',
-            [widget_points],
+            [widget_points, point_class_widget],
         )
 
         widgets = [
