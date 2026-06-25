@@ -17,6 +17,7 @@ from itertools import tee
 
 import numpy as np
 
+import napari
 from magicgui import magic_factory, magicgui
 from magicgui.widgets import CheckBox, Container, Label, PushButton, SpinBox
 from napari import layers as L
@@ -48,7 +49,18 @@ _HELP_TEXT = (
 
 
 def _show_help_dialog(parent=None):
-    """Show plugin usage help in a compact popup dialog."""
+    """Show the plugin help text in a modal dialog.
+
+    Parameters
+    ----------
+    parent : QWidget or None
+        Optional parent widget used for dialog ownership.
+
+    Returns
+    -------
+    None
+        The dialog is shown for its side effect.
+    """
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle('Proofread Brainbow Help')
     msg_box.setIcon(QMessageBox.Information)
@@ -59,7 +71,20 @@ def _show_help_dialog(parent=None):
 
 
 def _make_titled_panel(title: str, widgets):
-    """Create a compact bordered panel with a title row."""
+    """Build a titled container panel for a group of widgets.
+
+    Parameters
+    ----------
+    title : str
+        Text displayed in the panel header.
+    widgets : sequence
+        Widgets to place inside the panel body.
+
+    Returns
+    -------
+    magicgui.widgets.Container
+        A styled container holding the title and provided widgets.
+    """
     title_label = Label(value=title)
     title_label.label = ''
     title_label.native.setObjectName('panelTitle')
@@ -88,7 +113,18 @@ def _make_titled_panel(title: str, widgets):
     return panel
 
 def setup_layout(gui_container):
-    """Adjust layout spacing and margins for a magicgui container."""
+    """Apply compact spacing and margins to a magicgui container.
+
+    Parameters
+    ----------
+    gui_container : magicgui.widgets.Container
+        Container whose native Qt layout will be adjusted.
+
+    Returns
+    -------
+    None
+        The container is modified in place.
+    """
     # Adjust structural layout padding and inner widget spacing
     qt_layout = gui_container.native.layout()
     qt_layout.setSpacing(4)
@@ -103,6 +139,20 @@ def widget_cvtRGB(
     viewer: 'napari.Viewer',
     img_layer: L.Image,
 ) -> types.LayerDataTuple:
+    """Move a channel axis to the end so napari can display the image as RGB.
+
+    Parameters
+    ----------
+    viewer : napari.Viewer
+        Active Napari viewer that owns the layers.
+    img_layer : napari.layers.Image
+        The selected image layer to convert.
+
+    Returns
+    -------
+    LayerDataTuple or None
+        RGB image layer data when conversion is possible, otherwise ``None``.
+    """
     # print(len(viewer.layers))
     # print(f"you have selected {img_layer}")
     
@@ -145,6 +195,20 @@ def widget_norm(
     viewer: 'napari.Viewer',
     img_layer: L.Image,
 ):
+    """Set the selected image's upper contrast limit to its 99th percentile.
+
+    Parameters
+    ----------
+    viewer : napari.Viewer
+        Active Napari viewer containing the layers.
+    img_layer : napari.layers.Image or None
+        Image layer to normalize.
+
+    Returns
+    -------
+    None
+        The layer contrast limits are updated in place.
+    """
     if img_layer is None:
         return
     data = img_layer.data
@@ -179,6 +243,20 @@ def widget_contrast_limits_all(
     viewer: 'napari.Viewer',
     contrast_limits_vmax,
 ):
+    """Apply a shared maximum contrast limit to every image layer.
+
+    Parameters
+    ----------
+    viewer : napari.Viewer
+        Active Napari viewer whose layers will be updated.
+    contrast_limits_vmax : float
+        Upper contrast limit to apply when it exceeds a layer's lower bound.
+
+    Returns
+    -------
+    None
+        Image layers are updated in place.
+    """
     for l in viewer.layers:
         if isinstance(l, L.Image):
             _min = l.contrast_limits[0]
@@ -241,6 +319,22 @@ def widget_scale(
     scale_y_default,
     scale_x_default,
 ):
+    """Set a shared z/y/x scale for all layers that support scaling.
+
+    Parameters
+    ----------
+    viewer : napari.Viewer
+        Active Napari viewer whose layers will be updated.
+    scale_z, scale_y, scale_x : float
+        Scale factors for the z, y, and x axes.
+    scale_z_default, scale_y_default, scale_x_default : Any
+        Reset controls wired into the widget; included for magicgui binding.
+
+    Returns
+    -------
+    None
+        Layer scales are updated in place.
+    """
     scale_z = round(scale_z, 1)
     scale_y = round(scale_y, 1)
     scale_x = round(scale_x, 1)
@@ -254,6 +348,18 @@ def widget_scale(
 
 @widget_scale.scale_z_default.changed.connect
 def _scale_z_default(value):
+    """Reset the z scale slider and apply the new scale to image and points layers.
+
+    Parameters
+    ----------
+    value : Any
+        Button event payload from the reset control.
+
+    Returns
+    -------
+    None
+        The scale widget and matching layers are updated in place.
+    """
     viewer = widget_scale.viewer.value
     # print(viewer, type(viewer))
     scale_z = 1.0
@@ -271,6 +377,18 @@ def _scale_z_default(value):
 
 @widget_scale.scale_y_default.changed.connect
 def _scale_y_default(value):
+    """Reset the y scale slider and apply the new scale to all layers.
+
+    Parameters
+    ----------
+    value : Any
+        Button event payload from the reset control.
+
+    Returns
+    -------
+    None
+        The scale widget and matching layers are updated in place.
+    """
     viewer = widget_scale.viewer.value
     scale_z = widget_scale.scale_z.value
     scale_y = 1.0
@@ -286,6 +404,18 @@ def _scale_y_default(value):
 
 @widget_scale.scale_x_default.changed.connect
 def _scale_x_default(value):
+    """Reset the x scale slider and apply the new scale to all layers.
+
+    Parameters
+    ----------
+    value : Any
+        Button event payload from the reset control.
+
+    Returns
+    -------
+    None
+        The scale widget and matching layers are updated in place.
+    """
     viewer = widget_scale.viewer.value
     scale_z = widget_scale.scale_z.value
     scale_y = widget_scale.scale_y.value
@@ -313,6 +443,20 @@ def widget_points(
     point_layer: L.Points,
     point_size,
 ):
+    """Set the displayed size for the selected points layer.
+
+    Parameters
+    ----------
+    point_layer : napari.layers.Points or None
+        Target points layer whose marker size will be changed.
+    point_size : float
+        New marker size to use for the layer.
+
+    Returns
+    -------
+    None
+        The points layer is updated in place.
+    """
     if point_layer is None:
         return
     # print(f"you have selected {point_layer}")
@@ -352,7 +496,35 @@ def widget_grid(
     xbins,
     ybins,
 ) -> types.LayerDataTuple:
+    """Create a line grid overlay for the selected image layer.
+
+    Parameters
+    ----------
+    img_layer : napari.layers.Image or None
+        Image layer used to determine the grid extent.
+    xbins : int
+        Number of bins to draw in the x direction.
+    ybins : int
+        Number of bins to draw in the y direction.
+
+    Returns
+    -------
+    LayerDataTuple or None
+        Shapes layer data for the grid overlay, or ``None`` if no image exists.
+    """
     def pairwise(x):
+        """Yield adjacent pairs from an iterable.
+
+        Parameters
+        ----------
+        x : iterable
+            Input sequence to traverse in pairs.
+
+        Returns
+        -------
+        iterator
+            Iterator of consecutive 2-tuples.
+        """
         a, b = tee(x)
         next(b, None)
         return zip(a, b)
@@ -430,6 +602,18 @@ _CLASS_COLORS_HEX = [
 
 
 def _hex_to_rgba(hex_color: str):
+    """Convert a six-digit hex color string to an RGBA list.
+
+    Parameters
+    ----------
+    hex_color : str
+        Color string such as ``'#RRGGBB'``.
+
+    Returns
+    -------
+    list of float
+        RGBA values normalized to the range [0, 1].
+    """
     h = hex_color.lstrip('#')
     return [int(h[i: i + 2], 16) / 255.0 for i in (0, 2, 4)] + [1.0]
 
@@ -454,6 +638,18 @@ class PointClassWidget(Container):
     """
 
     def __init__(self, point_layer_widget):
+        """Create the class-annotation controls bound to a points-layer selector.
+
+        Parameters
+        ----------
+        point_layer_widget : magicgui.widgets.Widget
+            Widget that selects the active points layer.
+
+        Returns
+        -------
+        None
+            The widget is initialized in place.
+        """
         self._point_layer_widget = point_layer_widget
         self._layer = None
         self._event_conn = None
@@ -492,6 +688,18 @@ class PointClassWidget(Container):
     # ---- slots -----------------------------------------------------------
 
     def _on_toggle(self, enabled):
+        """Enable or disable class annotation controls.
+
+        Parameters
+        ----------
+        enabled : bool
+            Whether class annotation should be active.
+
+        Returns
+        -------
+        None
+            Internal state and the active layer are updated in place.
+        """
         self._class_spin.enabled = enabled
         self._assign_btn.enabled = enabled
         layer = self._current_layer()
@@ -501,19 +709,54 @@ class PointClassWidget(Container):
             self._deactivate(layer)
 
     def _on_layer_changed(self, layer):
+        """Switch the widget to a new active points layer.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points or None
+            Newly selected points layer.
+
+        Returns
+        -------
+        None
+            The previous layer is detached and the new one is activated.
+        """
         if self._enable_cb.value:
             self._deactivate(self._layer)
             self._activate(layer)
         self._layer = layer
 
     def _on_class_changed(self, cls):
+        """Update the current class label and default new points to that class.
+
+        Parameters
+        ----------
+        cls : int
+            Newly selected class identifier.
+
+        Returns
+        -------
+        None
+            The widget label and active layer properties are updated in place.
+        """
         self._color_label.value = f'Class {cls} color: {_CLASS_COLORS_HEX[cls]}'
         layer = self._current_layer()
         if layer is not None and self._enable_cb.value:
             layer.current_properties = {'class': [cls]}
 
     def _on_data_changed(self, event):
-        """Called when points are added to or removed from the layer."""
+        """Synchronize class metadata after points are added or removed.
+
+        Parameters
+        ----------
+        event : Event
+            Napari layer data event emitted after a points-layer mutation.
+
+        Returns
+        -------
+        None
+            The class column and display are refreshed in place.
+        """
         layer = self._current_layer()
         if layer is None or self._refreshing:
             return
@@ -521,6 +764,18 @@ class PointClassWidget(Container):
         self._refresh_display(layer)
 
     def _on_assign(self, _):
+        """Assign the selected class to the currently selected points.
+
+        Parameters
+        ----------
+        _ : Any
+            Button event payload, ignored.
+
+        Returns
+        -------
+        None
+            The selected points are updated in place.
+        """
         layer = self._current_layer()
         if layer is None:
             return
@@ -536,9 +791,32 @@ class PointClassWidget(Container):
     # ---- helpers ---------------------------------------------------------
 
     def _current_layer(self):
+        """Return the currently selected points layer.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        napari.layers.Points or None
+            The active points layer selected in the companion widget.
+        """
         return self._point_layer_widget.value
 
     def _activate(self, layer):
+        """Attach event handling and initialize class data for a points layer.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points or None
+            Layer to activate for class annotation.
+
+        Returns
+        -------
+        None
+            The layer is prepared for class annotation in place.
+        """
         if layer is None:
             return
         self._layer = layer
@@ -550,6 +828,18 @@ class PointClassWidget(Container):
         self._refresh_display(layer)
 
     def _deactivate(self, layer):
+        """Detach event handling and hide annotation visuals for a points layer.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points or None
+            Layer to deactivate.
+
+        Returns
+        -------
+        None
+            The layer is left in a non-annotating state.
+        """
         self._disconnect_events()
         if layer is None:
             return
@@ -561,6 +851,17 @@ class PointClassWidget(Container):
             pass
 
     def _disconnect_events(self):
+        """Disconnect the stored data-change callback if it is attached.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+            Any existing event connection is removed.
+        """
         if self._event_conn is not None:
             try:
                 self._event_conn.disconnect()
@@ -569,13 +870,35 @@ class PointClassWidget(Container):
             self._event_conn = None
 
     def _ensure_class_column(self, layer):
-        """Add 'class' column (int64, default 0) to layer.features if absent."""
+        """Ensure the points layer has a ``class`` feature column.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points
+            Points layer whose feature table will be checked.
+
+        Returns
+        -------
+        None
+            The features table is updated in place when needed.
+        """
         n = len(layer.data)
         if 'class' not in layer.features.columns:
             layer.features['class'] = np.zeros(n, dtype=np.int64)
 
     def _sync_class_column(self, layer):
-        """Keep 'class' column length in sync with layer.data after add/remove."""
+        """Resize the ``class`` column to match the current number of points.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points
+            Points layer whose feature table will be synchronized.
+
+        Returns
+        -------
+        None
+            The ``class`` column is updated in place.
+        """
         n = len(layer.data)
         if 'class' not in layer.features.columns:
             layer.features['class'] = np.zeros(n, dtype=np.int64)
@@ -593,7 +916,18 @@ class PointClassWidget(Container):
             layer.features['class'] = layer.features['class'].to_numpy()[:n]
 
     def _refresh_display(self, layer):
-        """Recompute per-point face colors and class-number text labels."""
+        """Recompute face colors and text labels from the stored class values.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points
+            Points layer to redraw.
+
+        Returns
+        -------
+        None
+            The layer's visual properties are updated in place.
+        """
         if self._refreshing:
             return
         n = len(layer.data)
@@ -775,17 +1109,37 @@ class ThresholdPoints(L.Points):
         data=None,
         **kwargs
     ):
+        """Create a points layer that stores IDs and probabilities.
+
+        Parameters
+        ----------
+        data : array-like, optional
+            Initial point coordinates.
+        **kwargs : dict
+            Additional keyword arguments passed to the base points layer.
+
+        Returns
+        -------
+        None
+            The layer is initialized in place.
+        """
         super().__init__(
             data=data,
             **kwargs,
         )
 
     def add(self, coord):
-        """Adds point at coordinate. (Override napari.Points.add)
+        """Add a point and initialize its ID and probability metadata.
 
         Parameters
         ----------
-        coord : sequence of indices to add point at
+        coord : sequence of float
+            Coordinate where the new point should be inserted.
+
+        Returns
+        -------
+        None
+            The point and mirrored source point are added in place.
         """
         super().add(coord)
         # -2 because the new point is already added.
@@ -802,7 +1156,16 @@ class ThresholdPoints(L.Points):
         source_points.properties['probability'][-1] = 1.0
 
     def remove_selected(self):
-        """Removes selected points if any. (Override napari.Points.remove_selected)
+        """Remove the selected points from this layer and its source layer.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+            The selected points are removed in place.
         """
         index = list(self.selected_data)
         index.sort()
@@ -819,7 +1182,17 @@ class ThresholdPoints(L.Points):
 
     @property
     def _type_string(self):
-        """If not set, it set to classname. It's used for save()"""
+        """Return the layer type string used when saving the layer.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+            The Napari layer type name for this class.
+        """
         return 'points'
 
 
@@ -835,6 +1208,22 @@ def threshold_prob(
     point_layer: L.Points,
     threshold
 ) -> L.Points:
+    """Filter points by probability and return a thresholded points layer.
+
+    Parameters
+    ----------
+    viewer : napari.Viewer
+        Active Napari viewer used to look up or add the thresholded layer.
+    point_layer : napari.layers.Points
+        Source points layer containing ``probability`` metadata.
+    threshold : float
+        Minimum probability required for a point to remain visible.
+
+    Returns
+    -------
+    napari.layers.Points or None
+        A thresholded points layer when one is created, otherwise ``None``.
+    """
     if 'probability' in point_layer.properties:
         prob = point_layer.properties['probability']
         m = prob > threshold
