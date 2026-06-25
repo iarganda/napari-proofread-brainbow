@@ -743,6 +743,8 @@ class PointClassWidget(Container):
         layer = self._current_layer()
         if layer is not None and self._enable_cb.value:
             layer.current_properties = {'class': [cls]}
+        
+        self._refresh_display(layer)
 
     def _on_data_changed(self, event):
         """Synchronize class metadata after points are added or removed.
@@ -762,7 +764,7 @@ class PointClassWidget(Container):
             return
         self._sync_class_column(layer)
         self._refresh_display(layer)
-
+        
     def _on_assign(self, _):
         """Assign the selected class to the currently selected points.
 
@@ -784,9 +786,12 @@ class PointClassWidget(Container):
             return
         cls = self._class_spin.value
         self._ensure_class_column(layer)
-        
-        # assign the selected class to the selected points in the current point layer
-        layer.features.loc[selected, 'class'] = cls
+
+        # Reassigning layer.features emits the features event in napari.
+        # In-place pandas edits may not invalidate text labels immediately.
+        features = layer.features.copy()
+        features.loc[selected, 'class'] = cls
+        layer.features = features
 
         # Force the layer name in the GUI to end in '.csv'
         # This ensures that when you click "Save", the native dialog automatically includes the extension.
@@ -795,6 +800,7 @@ class PointClassWidget(Container):
 
         # Refresh the display to reflect the updated class assignments
         self._refresh_display(layer)
+        layer.refresh()
 
     # ---- helpers ---------------------------------------------------------
 
@@ -949,6 +955,7 @@ class PointClassWidget(Container):
             return
         self._ensure_class_column(layer)
         classes = layer.features['class'].to_numpy().astype(int)
+        
         colors = np.array(
             [_CLASS_COLORS_RGBA[c] if 0 <= c < _N_CLASSES else _UNASSIGNED_RGBA
              for c in classes],
