@@ -784,8 +784,10 @@ class PointClassWidget(Container):
             return
         cls = self._class_spin.value
         self._ensure_class_column(layer)
-        for i in selected:
-            layer.features['class'].iat[i] = cls
+        
+        # assign the selected class to the selected points in the current point layer
+        layer.features.loc[selected, 'class'] = cls
+
         self._refresh_display(layer)
 
     # ---- helpers ---------------------------------------------------------
