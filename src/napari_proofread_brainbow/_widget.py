@@ -788,6 +788,12 @@ class PointClassWidget(Container):
         # assign the selected class to the selected points in the current point layer
         layer.features.loc[selected, 'class'] = cls
 
+        # Force the layer name in the GUI to end in '.csv'
+        # This ensures that when you click "Save", the native dialog automatically includes the extension.
+        if not layer.name.lower().endswith('.csv'):
+            layer.name = f"{layer.name}.csv"
+
+        # Refresh the display to reflect the updated class assignments
         self._refresh_display(layer)
 
     # ---- helpers ---------------------------------------------------------
@@ -827,6 +833,12 @@ class PointClassWidget(Container):
         layer.current_properties = {'class': [self._class_spin.value]}
         self._disconnect_events()
         self._event_conn = layer.events.data.connect(self._on_data_changed)
+
+        # Force the layer name in the GUI to end in '.csv'
+        # This ensures that when you click "Save", the native dialog automatically includes the extension.
+        if not layer.name.lower().endswith('.csv'):
+            layer.name = f"{layer.name}.csv"
+
         self._refresh_display(layer)
 
     def _deactivate(self, layer):
