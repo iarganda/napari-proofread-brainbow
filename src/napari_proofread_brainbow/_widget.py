@@ -743,7 +743,9 @@ class PointClassWidget(Container):
         layer = self._current_layer()
         if layer is not None and self._enable_cb.value:
             layer.current_properties = {'class': [cls]}
-        
+            if self._assign_selected_points_class(layer, cls):
+                return
+
         self._refresh_display(layer)
 
     def _on_data_changed(self, event):
@@ -781,10 +783,39 @@ class PointClassWidget(Container):
         layer = self._current_layer()
         if layer is None:
             return
+        cls = self._class_spin.value
+        if not self._assign_selected_points_class(layer, cls):
+            return
+
+        # Force the layer name in the GUI to end in '.csv'
+        # This ensures that when you click "Save", the native dialog automatically includes the extension.
+        if not layer.name.lower().endswith('.csv'):
+            layer.name = f"{layer.name}.csv"
+
+    # ---- helpers ---------------------------------------------------------
+
+    def _assign_selected_points_class(self, layer, cls):
+        """Assign a class value to all selected points in a layer.
+
+        Parameters
+        ----------
+        layer : napari.layers.Points or None
+            Layer containing the selected points to update.
+        cls : int
+            Class identifier to assign.
+
+        Returns
+        -------
+        bool
+            ``True`` when at least one selected point is updated, else ``False``.
+        """
+        if layer is None:
+            return False
+
         selected = list(layer.selected_data)
         if not selected:
-            return
-        cls = self._class_spin.value
+            return False
+
         self._ensure_class_column(layer)
 
         # Reassigning layer.features emits the features event in napari.
@@ -793,16 +824,9 @@ class PointClassWidget(Container):
         features.loc[selected, 'class'] = cls
         layer.features = features
 
-        # Force the layer name in the GUI to end in '.csv'
-        # This ensures that when you click "Save", the native dialog automatically includes the extension.
-        if not layer.name.lower().endswith('.csv'):
-            layer.name = f"{layer.name}.csv"
-
-        # Refresh the display to reflect the updated class assignments
         self._refresh_display(layer)
         layer.refresh()
-
-    # ---- helpers ---------------------------------------------------------
+        return True
 
     def _current_layer(self):
         """Return the currently selected points layer.
