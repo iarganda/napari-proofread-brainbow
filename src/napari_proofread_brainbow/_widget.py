@@ -659,13 +659,31 @@ class PointClassWidget(Container):
         self._enable_cb.label = ''
 
         self._class_spin = SpinBox(value=0, min=0, max=_N_CLASSES - 1)
-        self._class_spin.label = 'Current class'
+        self._class_spin.label = ''
         self._class_spin.enabled = False
 
+        self._class_label = Label(value='Current class')
+        self._class_label.label = ''
+
+        self._color_text_label = Label(value='Class color')
+        self._color_text_label.label = ''
+
         self._color_label = Label(value='')
-        self._color_label.label = 'Class color'
+        self._color_label.label = ''
         self._color_label.native.setFixedSize(18, 18)
         self._update_color_label(0)
+
+        self._class_row = Container(
+            layout='horizontal',
+            widgets=[
+                self._class_label,
+                self._class_spin,
+                self._color_text_label,
+                self._color_label,
+            ],
+            labels=False,
+        )
+        setup_layout( self._class_row )
 
         self._assign_btn = PushButton(text='Assign class to selected')
         self._assign_btn.label = ''
@@ -680,11 +698,10 @@ class PointClassWidget(Container):
             layout='vertical',
             widgets=[
                 self._enable_cb,
-                self._class_spin,
-                self._color_label,
+                self._class_row,
                 self._assign_btn,
             ],
-            labels=True,
+            labels=False,
         )
 
     # ---- slots -----------------------------------------------------------
