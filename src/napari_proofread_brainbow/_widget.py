@@ -662,8 +662,10 @@ class PointClassWidget(Container):
         self._class_spin.label = 'Current class'
         self._class_spin.enabled = False
 
-        self._color_label = Label(value=f'Class 0 color: {_CLASS_COLORS_HEX[0]}')
-        self._color_label.label = ''
+        self._color_label = Label(value='')
+        self._color_label.label = 'Class color'
+        self._color_label.native.setFixedSize(18, 18)
+        self._update_color_label(0)
 
         self._assign_btn = PushButton(text='Assign class to selected')
         self._assign_btn.label = ''
@@ -739,7 +741,7 @@ class PointClassWidget(Container):
         None
             The widget label and active layer properties are updated in place.
         """
-        self._color_label.value = f'Class {cls} color: {_CLASS_COLORS_HEX[cls]}'
+        self._update_color_label(cls)
         layer = self._current_layer()
         if layer is not None and self._enable_cb.value:
             layer.current_properties = {'class': [cls]}
@@ -793,6 +795,30 @@ class PointClassWidget(Container):
             layer.name = f"{layer.name}.csv"
 
     # ---- helpers ---------------------------------------------------------
+
+    def _update_color_label(self, cls):
+        """Update the class-color swatch to match the selected class.
+
+        Parameters
+        ----------
+        cls : int
+            Class identifier whose configured color should be displayed.
+
+        Returns
+        -------
+        None
+            The preview swatch is updated in place.
+        """
+        color = _CLASS_COLORS_HEX[cls]
+        self._color_label.native.setStyleSheet(
+            'background-color: ' + color + ';'
+            'border: 1px solid palette(mid);'
+            'min-width: 18px;'
+            'max-width: 18px;'
+            'min-height: 18px;'
+            'max-height: 18px;'
+        )
+        self._color_label.tooltip = color
 
     def _assign_selected_points_class(self, layer, cls):
         """Assign a class value to all selected points in a layer.
